@@ -62,7 +62,7 @@ def fix(ds, issues, cfg):
             clip_lines[issue.image][issue.line] = None
 
     # 1. Xoá ảnh
-    for stem in to_remove_images:
+    for stem in sorted(to_remove_images):
         img_path = ds.image_path(stem)
         if img_path and img_path.exists():
             img_path.unlink()
@@ -160,7 +160,7 @@ def fix(ds, issues, cfg):
         ds.label_path(stem).write_text(content, encoding="utf-8")
 
     # 4. Ghi needs_label
-    for stem in needs_label_images:
+    for stem in sorted(needs_label_images):
         fixes.append({
             "image": stem,
             "line": None,
