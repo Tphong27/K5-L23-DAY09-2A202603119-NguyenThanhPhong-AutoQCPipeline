@@ -2,11 +2,11 @@
 
 ## 1. Kết luận trước
 
-Pipeline kết luận **Hold**. Ban đầu có 224 ảnh; bước nhận dữ liệu loại 21 ảnh và giữ 203 ảnh. Sau khi máy sửa lỗi và người duyệt mô phỏng xem 80 ảnh, còn **44/203 ảnh (21,67%)** có cảnh báo chưa được xác nhận. Tỉ lệ này cao hơn ngưỡng Hold 10%. Vòng kiểm cuối không còn lỗi bắt buộc, nên kết quả không phải Rework. Bộ `clean_v1` đã xuất chỉ là **bản nháp**, chưa phải dữ liệu được phát hành.
+Pipeline kết luận **Hold**. Ban đầu có 224 ảnh; bước nhận dữ liệu loại 21 ảnh và giữ 203 ảnh. Sau khi máy sửa lỗi và người duyệt mô phỏng xem 80 ảnh, còn **44/203 ảnh (21,67%)** có cảnh báo chưa được xác nhận. Tỉ lệ này cao hơn ngưỡng Hold 10%. Vòng kiểm cuối không còn lỗi bắt buộc, nên kết quả không phải Rework. Bộ `clean_v1` đã xuất chỉ là **bản nháp**, chưa phải dữ liệu được phát hành. Trong lần train so sánh, điểm của clean thấp hơn raw; tôi trình bày giới hạn của phép so sánh ở mục 5.
 
 ## 2. Lỗi và phân việc
 
-Tôi đếm theo `02_error_list_v1.csv`, trước khi sửa: **57 dòng lỗi bắt buộc và 171 dòng cảnh báo**. Trong 57 lỗi có 21 lỗi ở bước nhận dữ liệu (224 ảnh ban đầu); 36 lỗi còn lại thuộc vòng kiểm trên 203 ảnh được giữ. Một ảnh có thể có nhiều dòng lỗi, nên không thể lấy 171 chia cho 203 để ra tỉ lệ ảnh cảnh báo.
+Đếm theo `02_error_list_v1.csv`, trước khi sửa: **57 dòng lỗi bắt buộc và 171 dòng cảnh báo**. Trong 57 lỗi có 21 lỗi ở bước nhận dữ liệu (224 ảnh ban đầu); 36 lỗi còn lại thuộc vòng kiểm trên 203 ảnh được giữ. Một ảnh có thể có nhiều dòng lỗi, nên không thể lấy 171 chia cho 203 để ra tỉ lệ ảnh cảnh báo.
 
 | Mã lỗi               | Số dòng | Cách xử lý                            |
 | -------------------- | ------: | ------------------------------------- |
@@ -42,7 +42,7 @@ Tôi đếm theo `02_error_list_v1.csv`, trước khi sửa: **57 dòng lỗi b�
 
 `phash_dist=4` và `8` cho **cùng precision/recall trên calib**; riêng kết quả calib không đủ để chọn 8. Tôi dùng thêm kết quả trên raw như bảng trên, nhưng không thể suy từ pHash rằng hai ảnh chắc chắn là một. Ở mức 16, số ảnh raw bị báo trùng hoặc rò rỉ tăng từ 16 lên 26; ở mức 20 là 134. Mức cao có nguy cơ loại nhầm ảnh nên tôi không chọn. Bộ calib chỉ có 39 ảnh, vì vậy các tỉ lệ thay đổi mạnh khi bắt thêm hoặc bỏ sót một ca.
 
-`conf=0,5` cũng có giới hạn: trên calib, `POSSIBLE_LOOSE_BOX` chỉ bắt được **1/5 ca chèn** (recall 0,20); `POSSIBLE_FALSE_POS` có **5 cờ đúng và 9 cờ sai** (precision khoảng 0,36). Vì thế tôi không xem cảnh báo của model là kết luận cuối cùng. Calib là dữ liệu có lỗi chèn, còn raw có thể có lỗi khác; kết quả calib không chứng minh pipeline bắt hết lỗi trên raw.
+`conf=0,5` cũng có giới hạn: trên calib, `POSSIBLE_LOOSE_BOX` chỉ bắt được **1/5 ca chèn** (recall 0,20); `POSSIBLE_FALSE_POS` có **5 cờ đúng và 9 cờ sai** (precision khoảng 0,36) => không xem cảnh báo của model là kết luận cuối cùng. Calib là dữ liệu có lỗi chèn, còn raw có thể có lỗi khác; kết quả calib không chứng minh pipeline bắt hết lỗi trên raw.
 
 ## 4. Cửa chặn và điểm mù
 
@@ -55,7 +55,16 @@ Tôi đếm theo `02_error_list_v1.csv`, trước khi sửa: **57 dòng lỗi b�
 
 ## 5. Train raw và clean
 
-**Chưa chạy** phần train, nên tôi không có số mAP để kết luận clean tốt hơn raw. Nếu làm tiếp, tôi sẽ giữ cùng tập val/test, model, siêu tham số và ít nhất hai seed cho mỗi biến thể, rồi so mức chênh lệch với độ dao động giữa các seed. `Hold` vẫn cho phép thử nghiệm trên bản nháp, nhưng kết quả phải được ghi rõ là thử nghiệm trên bản chưa phát hành.
+Tôi đã train `raw` và `clean` bằng `yolo26n.pt`, cùng 20 epoch, batch 16, kích thước ảnh 640, seed 0 và 1, cùng tập val 40 ảnh và test 100 ảnh. Bảng dưới lấy từ `submission/results/comparison.md`; mỗi ô là **trung bình ± độ lệch chuẩn** giữa hai seed trên tập test.
+
+| Bộ train |         mAP50 |      mAP50-95 |     Precision |        Recall |
+| -------- | ------------: | ------------: | ------------: | ------------: |
+| raw      | 0,726 ± 0,000 | 0,512 ± 0,004 | 0,764 ± 0,061 | 0,649 ± 0,028 |
+| clean    | 0,695 ± 0,010 | 0,482 ± 0,007 | 0,726 ± 0,005 | 0,619 ± 0,016 |
+
+Trong thí nghiệm này, **clean thấp hơn raw 0,031 mAP50 và khoảng 0,030 mAP50-95**. Chênh mAP50 lớn hơn độ lệch giữa hai seed của từng bộ, nên tôi không thể nói hai kết quả bằng nhau. Tuy nhiên, hai seed còn ít và phép so sánh này chưa tách riêng tác động của việc sửa nhãn. Theo log Ultralytics, raw có 224 file ảnh nhưng **chỉ 213 ảnh được dùng để train** sau khi bỏ 11 ảnh/nhãn hỏng; clean dùng 203 ảnh và không có ảnh hỏng. Hai bộ khác cả số ảnh lẫn nhãn. Pipeline cũng báo 5 ảnh raw trùng với tập test, có thể làm điểm raw cao giả, nhưng tôi chưa đo được mức ảnh hưởng. Mặt khác, clean vẫn còn 44 ảnh có cảnh báo chưa duyệt, nên không phải bộ nhãn hoàn toàn sạch.
+
+AP50 trung bình của lớp `truck` giảm từ khoảng **0,648** ở raw xuống **0,524** ở clean; `bus` tăng nhẹ từ **0,695** lên **0,704**.
 
 ## 6. Quyết định và ghi chú AI
 
